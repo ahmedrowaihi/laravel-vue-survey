@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Validator;
 
-
 /**
  * Class AuthController
  *
@@ -68,7 +67,6 @@ class AuthController extends Controller
         unset($credentials['remember']);
 
         if (!Auth::attempt($credentials, $remember)) {
-            dd($credentials);
             return response(['error' => 'The provided credentials are incorrect'], 422);
         }
         /** @var User $user */
@@ -79,5 +77,17 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token
         ]);
+    }
+
+
+    /**
+     * Logout a user
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+        return response(['message' => 'Successfully logged out']);
     }
 };
