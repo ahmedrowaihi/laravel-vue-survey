@@ -7,6 +7,7 @@
       </h1>
     </div>
   </template>
+  <div v-if="surveyLoading" class="flex justify-center">Loading...</div>
   <form @submit.prevent="saveSurvey">
     <div class="shadow sm:rounded-md sm:overflow-hidden">
       <!-- Survey Fields -->
@@ -25,7 +26,9 @@
                     </svg>
                   </span>
               <button type="button" class="relative overflow-hidden ml-2 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                <input type="file"
+                <input
+                type="file"
+                @change="onImageChoose"
                 id="image"
                 name="image"
                 class="absolute h-full w-full top-0 left-0 bottom-0 right-0 opacity-0 cursor-pointer"/>
@@ -65,7 +68,7 @@
 <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
 <h3 class="text-2xl font-semibold flex items-center justify-between">
 Questions
-<button type="button" class="flex items-center text-sm py-1 px-4 rounded-sm text-white bg-gray-600 hover:bg-gray-700 transition-colors">
+<button @click="addQuestion()" type="button" class="flex items-center text-sm py-1 px-4 rounded-sm text-white bg-gray-600 hover:bg-gray-700 transition-colors">
   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
   </svg>
@@ -95,24 +98,126 @@ Add Question
 </template>
 
 <script setup>
+import { v4 as uuidv4 } from "uuid";
 import PageComponent from '../components/PageComponent.vue';
 import QuestionEditor from '../components/editor/QuestionEditor.vue';
-import {ref} from 'vue';
+import {ref,computed,watch} from 'vue';
 import store from '../store';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
+const router = useRouter();
+
+// Create empty survey
 let model = ref({
-      title: '',
-      description: '',
-      status: false,
-      image:null,
-      expire_date:null,
-      questions:[]
+  title: "",
+  slug: "",
+  status: false,
+  description: null,
+  image: null,
+  image_url: null,
+  expire_date: null,
+  questions: [],
 });
 
-if(route.params.id) model.value = store.state.surveys.find(s => s.id == route.params.id);
+if(route.params.id) model.value = store.state.surveys.data.find(s => s.id == route.params.id);
+
+// Get survey loading state, which only changes when we fetch survey from backend
+const surveyLoading = computed(() => store.state.currentSurvey.loading);
 
 
+watch(surveyLoading, () => store.state.currentSurvey.data, (newValue) => {
+  if(newValue) model.value = newValue;
+});
+
+
+// If the current component is rendered on survey update route we make a request to fetch survey
+if (route.params.id) {
+  store.dispatch("getSurvey", route.params.id);
+}
+
+/**
+ * Choose Image
+ */
+function onImageChoose(ev) {
+  const file = ev.target.files[0];
+  const reader = new FileReader();
+  reader.onload = () => {
+    // The field to send on backend and apply validations
+    model.value.image = reader.result;
+    // The field to display here
+    model.value.image_url = reader.result;
+    ev.target.value = "";
+  };
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Add Question
+ */
+function addQuestion(index) {
+  const newQuestion = {
+    id: uuidv4(),
+    type: "text",
+    question: "",
+    description: null,
+    data: {},
+  };
+  model.value.questions.splice(index, 0, newQuestion);
+}
+/**
+ * Delete Question
+ */
+function deleteQuestion(question) {
+  model.value.questions = model.value.questions.filter((q) => q !== question);
+}
+/**
+ * Change Question
+ */
+function questionChange(question) {
+  // Important to explicitelly assign question.data.options, because otherwise it is a Proxy object
+  // and it is lost in JSON.stringify()
+  if (question.data.options) question.data.options = [...question.data.options];
+
+  model.value.questions = model.value.questions.map((q) => {
+    if (q.id === question.id) return JSON.parse(JSON.stringify(question));
+    return q;
+  });
+}
+
+
+
+/**
+ * Create or update survey
+ */
+function saveSurvey() {
+  let action = "created";
+  if (model.value.id) {
+    action = "updated";
+  }
+  store.dispatch("saveSurvey", { ...model.value }).then(({ data }) => {
+    store.commit("notify", {
+      type: "success",
+      message: "The survey was successfully " + action,
+    });
+    router.push({
+      name: "SurveyView",
+      params: { id: data.data.id },
+    });
+  });
+}
+function deleteSurvey() {
+  if (
+    confirm(
+      `Are you sure you want to delete this survey? Operation can't be undone!!`
+    )
+  ) {
+    store.dispatch("deleteSurvey", model.value.id).then(() => {
+      router.push({
+        name: "Surveys",
+      });
+    });
+  }
+}
 </script>
 
 <style>

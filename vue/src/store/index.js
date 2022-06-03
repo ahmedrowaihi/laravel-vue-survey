@@ -9,6 +9,8 @@ const tmpSurveys = [
     status: "draft",
     image:
       "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60",
+    image_url:
+      "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
     created_at: "2022-01-01",
@@ -89,6 +91,8 @@ const tmpSurveys = [
     slug: "survey-1",
     status: "draft",
     image:
+      "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60",
+    image_url:
       "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
@@ -172,21 +176,23 @@ const store = createStore({
       data: {},
       token: sessionStorage.getItem("TOKEN"),
     },
-    surveys: [...tmpSurveys],
-    // questionTypes: ["text", "select", "radio", "checkbox", "textarea"],
-    questionTypes: ["text", "radio"],
+    dashboard: {
+      loading: false,
+      data: {},
+    },
+    surveys: {
+      loading: false,
+      links: [],
+      data: [],
+    },
+    currentSurvey: {
+      data: {},
+      loading: false,
+    },
+    // questionTypes: ["text", "radio"],
+    questionTypes: ["text", "select", "radio", "checkbox", "textarea"],
   },
   getters: {},
-  mutations: {
-    logout: (state) => {
-      state.user = { data: {}, token: null };
-      sessionStorage.clear();
-    },
-    setUser: (state, userData) => {
-      state.user = { data: userData.user, token: userData.token };
-      sessionStorage.setItem("TOKEN", userData.token);
-    },
-  },
   actions: {
     async register({ commit }, user) {
       return axiosClient.post("/register", user).then(({ data }) => {
@@ -205,6 +211,32 @@ const store = createStore({
         commit("logout");
         return response;
       });
+    },
+    async getSurveys({ commit }, { url = null } = {}) {
+      commit("setSurveysLoading", true);
+      // url = url || "/survey";
+      // return axiosClient.get(url).then((res) => {
+      commit("setSurveysLoading", false);
+      commit("setSurveys", { data: tmpSurveys });
+      return { data: tmpSurveys };
+      // });
+    },
+  },
+  mutations: {
+    logout: (state) => {
+      state.user = { data: {}, token: null };
+      sessionStorage.clear();
+    },
+    setUser: (state, userData) => {
+      state.user = { data: userData.user, token: userData.token };
+      sessionStorage.setItem("TOKEN", userData.token);
+    },
+    setSurveysLoading: (state, loading) => {
+      state.surveys.loading = loading;
+    },
+    setSurveys: (state, surveys) => {
+      // state.surveys.links = surveys.meta.links;
+      state.surveys.data = surveys.data;
     },
   },
   modules: {},

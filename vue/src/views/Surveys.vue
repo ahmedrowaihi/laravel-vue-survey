@@ -5,7 +5,7 @@
           <h1 class="text-3xl font-bold text-gray-900">Surveys</h1>
           <router-link
           :to="{name: 'SurveyCreate'}"
-          class="py-2 px-3 text-white bg-emerald-500 rounded-md hover:bg-emerald-600"
+          class="py-2 px-3 text-white bg-emerald-500 rounded-md hover:bg-emerald-600 transition-colors"
           >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 -mt-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -14,42 +14,88 @@
           </router-link>
         </div>
       </template>
-<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-  <div class="flex flex-col py-4 px-6 shadow-md bg-white hover:bg-gray-50 transition-colors h-[470px]"
-  v-for="survey in surveys"
-  :key="survey.id"
-  >
-  <img :src="survey.image" :alt="survey.title" class="w-full h-48 object-cover">
-  <h4 class="mt-4 text-lg font-bold">{{survey.title}}</h4>
-  <div v-html="survey.description" class="overflow-hidden flex-1"/>
-  <div class="flex justify-between items-center mt-3">
-    <router-link
-    :to="{name: 'SurveyView', params: {id: survey.id}}"
-    class="flex py-2 px-4 border border-transparent text-sm rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-    >
-    <svg
-    xmls="http://www.w3.org/2000/svg"
-    class="h-4 w-4 mr-2"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    >
-  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-    </svg>
+      <div v-if="surveys.loading" class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+<!-- Loader -->
+<div v-for="(a, ind) in ['1','2','3']" :key="a"
+:style="{ animationDelay: `${ind * 0.1}s` }"
+class="border shadow rounded-md p-4 max-w-sm w-full mx-auto h-[470px] opacity-0 animate-fade-in-down transition-all">
+  <div class="animate-pulse space-y-4">
+    <div class="bg-slate-200 w-full h-48"></div>
+    <div class="flex-1 space-y-6 py-1">
+      <div class="grid grid-cols-3 gap-4">
+        <div class="h-2 bg-slate-200 rounded col-span-1"></div>
+        </div>
+      <div class="space-y-3">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="h-2 bg-slate-200 rounded col-span-1"></div>
+          <div class="h-2 bg-slate-200 rounded col-span-2"></div>
+        </div>
 
-    Edit
-    </router-link>
-    <button
-    @click="deleteSurvey(survey)"
-    class="h-8 w-8 flex items-center justify-center rounded-full border border-transparent text-sm text-red-500 focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-    >
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 -mt-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-    </svg>
-    </button>
-  </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="h-2 bg-slate-200 rounded col-span-2"></div>
+          <div class="h-2 bg-slate-200 rounded col-span-1"></div>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="h-2 bg-slate-200 rounded col-span-1"></div>
+          <div class="h-2 bg-slate-200 rounded col-span-2"></div>
+        </div>
+        <div class="h-2 bg-slate-200 rounded"></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="h-2 bg-slate-200 rounded col-span-1"></div>
+          <div class="h-2 bg-slate-200 rounded col-span-2"></div>
+        </div>
+        <div class="h-2 bg-slate-200 rounded"></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="h-2 bg-slate-200 rounded col-span-1"></div>
+          <div class="h-2 bg-slate-200 rounded col-span-2"></div>
+        </div>
+        <div class="h-2 bg-slate-200 rounded"></div>
+      </div>
+    </div>
   </div>
 </div>
-
+<!-- Loader -->
+      </div>
+     <div v-else-if="surveys.data.length">
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+        <SurveyListItem
+          v-for="(survey, ind) in surveys.data"
+          :key="survey.id"
+          :survey="survey"
+          class="opacity-0 animate-fade-in-down transition-all"
+          :style="{ animationDelay: `${ind * 0.1}s` }"
+          @delete="deleteSurvey(survey)"
+        />
+      </div>
+      <div class="flex justify-center mt-5">
+        <nav
+          class="relative z-0 inline-flex justify-center rounded-md shadow-sm -space-x-px"
+          aria-label="Pagination"
+        >
+          <a
+            v-for="(link, i) of surveys.links"
+            :key="i"
+            :disabled="!link.url"
+            href="#"
+            @click="getForPage($event, link)"
+            aria-current="page"
+            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium whitespace-nowrap"
+            :class="[
+              link.active
+                ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors',
+              i === 0 ? 'rounded-l-md bg-gray-100 text-gray-700' : '',
+              i === surveys.links.length - 1 ? 'rounded-r-md' : '',
+            ]"
+            v-text="link.label"
+          >
+          </a>
+        </nav>
+      </div>
+    </div>
+    <div v-else class="text-gray-600 text-center py-16">
+      Your don't have surveys yet
+    </div>
 </PageComponent>
 
 </template>
@@ -58,16 +104,25 @@
 import PageComponent from '../components/PageComponent.vue'
 import store from '../store'
 import {computed} from 'vue'
+import SurveyListItem from '../components/SurveyListItem.vue';
 
-const surveys = computed(() =>  store.state.surveys);
+const surveys = computed(() => store.state.surveys);
+
+store.dispatch("getSurveys");
+
+
 function deleteSurvey(survey) {
-  if(confirm('Are you sure you want to delete this survey? This action cannot be undone.')){
-    // store.dispatch('deleteSurvey', survey.id);
-  }
+  if (confirm(`Are you sure you want to delete this survey? Operation can't be undone!!`)) store.dispatch("deleteSurvey", survey.id).then(() => store.dispatch("getSurveys"));
 }
 
+function getForPage(ev, link) {
+  ev.preventDefault();
+  if (!link.url || link.active) {
+    return;
+  }
+  store.dispatch("getSurveys", { url: link.url });
+}
 </script>
 
-<style scoped>
-
+<style>
 </style>
